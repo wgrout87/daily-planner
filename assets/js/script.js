@@ -20,6 +20,11 @@ var tilNextHour = null;
 
 
 // BEGIN FUNCTION EXPRESSIONS
+// Updates the date at the top of the scheduler
+var updateDate = function () {
+    currentDay.text(moment().format("MMMM Do YYYY"));
+};
+
 // Checks the time and compares that against the time blocks on the planner, changing the color of their textareas based on how they compare
 var timeAudit = function (rowEl) {
     // Gets the integer part of the time listed in the <p> element in the rows in the HTML
@@ -56,7 +61,6 @@ var timeAudit = function (rowEl) {
 
 // Runs timeAudit for each time period to properly color each <textarea>
 var updateTextarea = function () {
-    currentDay.text(moment().format("MMMM Do YYYY"));
     $(".row").each(function (index, el) {
         timeAudit(el);
     });
@@ -74,8 +78,10 @@ var tilNextHourBegins = function () {
     console.log("Time until next hour: " + (59 - JSON.parse(timeArr[0])) + " minutes " + (60 - JSON.parse(timeArr[1])) + "seconds");
 }
 
-// Updates the textarea color every hour
+// Ensures the correct date is displayed and updates the textarea color every hour
 var updateHourly = function () {
+    // Ensures the correct date is displayed
+    updateDate();
     // Calls the function immediately
     updateTextarea();
     // Calls the function again after an hour and continues with that interval
@@ -87,6 +93,9 @@ var updateHourly = function () {
 
 
 // BEGIN FUNCTIONS RUN ON LOAD
+// Updates the date at the top of the scheduler
+updateDate();
+
 // Runs timeAudit for each time period to properly color each <textarea>
 updateTextarea();
 
