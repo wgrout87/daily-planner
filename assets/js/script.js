@@ -9,6 +9,8 @@ var tilNextHour = null;
 var keyword = null;
 var time = null;
 var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
+var intervalID = null;
+var blinkIntervalIDArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
 // END GLOBAL VARIABLES
 
 
@@ -63,6 +65,7 @@ var updateTextarea = function () {
     $(".row").each(function (index, el) {
         timeAudit(el);
     });
+    console.log("Time of update: " + moment().format("hh:mm"));
 };
 
 // Determines an approximate time until the next hour begins
@@ -83,7 +86,6 @@ var updateHourly = function () {
     updateDate();
     // Calls the function again after an hour and continues with that interval
     setInterval(updateTextarea, (1000 * 60 * 60));
-    console.log("Time of update: " + moment().format("hh:mm"));
 };
 
 // Loads any saved <textarea> entries
@@ -106,6 +108,34 @@ var loadSaves = function () {
         });
     };
 };
+
+// Function for intermittently adding and removing "bg-danger" class to and from save buttons
+var blink = function (btnEl) {
+    // Capture the interval id in the global variable "intervalID"
+    intervalID = setInterval (() => {
+        // Checks if the "bg-danger" class is already present and removes it if it is
+        if (btnEl.hasClass("bg-danger")) {
+            btnEl.removeClass("bg-danger")
+        }
+
+        // Adds the "bg-danger" class if not already present
+        else {
+            btnEl.addClass("bg-danger")
+        };
+    }, 400);
+}
+
+// Function for stopping the blinking save buttons
+var clearBlink = function (btnEl) {
+    // Determines the arrPosition value for the current row
+    var btnReference = btnEl.parent().data().arrPosition;
+    // Clears the interval based on the saved ID in the position determined by the arrPosition value for the current row
+    clearInterval(blinkIntervalIDArr[btnReference]);
+    // Removes the "bg-danger" class if it is present
+    if (btnEl.hasClass("bg-danger")) {
+        btnEl.removeClass("bg-danger")
+    };
+}
 // END FUNCTION EXPRESSIONS
 
 
@@ -113,7 +143,10 @@ var loadSaves = function () {
 // BEGIN EVENT LISTENERS
 // Event listener for the save buttons
 $(".saveBtn").on("click", function () {
+    // Updates the date saved in the savedArr array
     savedArr[9] = currentDay;
+    // Stops the save button flashing if it was
+    clearBlink($(this));
     // Sets the "hour" variable to the time held in the <p> element on the same row as the button that was clicked
     var timeframe = $(this).parent().find("p").text().trim();
     // "time" variable is set to the integer value taken from "timeframe" and converted to military time
@@ -127,11 +160,25 @@ $(".saveBtn").on("click", function () {
         arrayPosition: determinePosition,
         hour: timeframe,
         textContent: textToSave
-    }
+    };
     // Adds the new timeframeObj into the "savedArr" array
     savedArr[timeframeObj.arrayPosition] = timeframeObj;
     // Saves the text using the time of that row as the keyword
     localStorage.setItem("savedTasks", JSON.stringify(savedArr));
+});
+
+// The save button will blink red if changes are not saved
+$("textarea").on("change", function () {
+    // Selects the button of the row in which changes were made
+    var changedRowBtn = $(this).parent().find("button");
+    // Adds the "bg-danger" class to the button
+    changedRowBtn.addClass("bg-danger");
+    // Starts blinking between the new and original background colors
+    blink(changedRowBtn);
+    // Retrieves the arrPosition value saved for the row
+    var blinkAltIntervalIDPosition = $(this).parent().data().arrPosition;
+    // Saves the interval ID for the blinking effect in an array that can be referenced again when the changes are saved
+    blinkIntervalIDArr[blinkAltIntervalIDPosition] = intervalID;
 });
 // END EVENT LISTENERS
 
