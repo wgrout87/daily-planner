@@ -1,5 +1,5 @@
 // BEGIN MEDIA QUERIES
-var currentDay = $("#currentDay");
+var currentDay = moment().format("MMMM Do YYYY");
 // END MEDIA QUERIS
 
 
@@ -8,7 +8,7 @@ var currentDay = $("#currentDay");
 var tilNextHour = null;
 var keyword = null;
 var time = null;
-var savedArr = [9,10,11,12,1,2,3,4,5];
+var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
 // END GLOBAL VARIABLES
 
 
@@ -16,7 +16,7 @@ var savedArr = [9,10,11,12,1,2,3,4,5];
 // BEGIN FUNCTION EXPRESSIONS
 // Updates the date at the top of the scheduler
 var updateDate = function () {
-    currentDay.text(moment().format("MMMM Do YYYY"));
+    $("#currentDay").text(currentDay);
 };
 
 // Checks the time and compares that against the time blocks on the planner, changing the color of their <textarea> elements based on how they compare
@@ -73,8 +73,8 @@ var tilNextHourBegins = function () {
     var timeArr = timeToNextHour.split(":");
     // Converts the time values in the array into milliseconds and subtracts that value from the number of milliseconds in an hour to determine the number of milliseconds until the next hour
     tilNextHour = (60 * 60 * 1000) - ((timeArr[0] * 60 * 1000) + (timeArr[1] * 1000));
-    console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
-    console.log("Time until next hour: " + (59 - JSON.parse(timeArr[0])) + " minutes " + (60 - JSON.parse(timeArr[1])) + "seconds");
+    // console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
+    // console.log("Time until next hour: " + (59 - JSON.parse(timeArr[0])) + " minutes " + (60 - JSON.parse(timeArr[1])) + "seconds");
 };
 
 // Ensures the correct date is displayed and updates the <textarea> color every hour
@@ -90,18 +90,21 @@ var updateHourly = function () {
 var loadSaves = function () {
     // Retrieves and parses saved array from local storage
     savedArr = JSON.parse(localStorage.getItem("savedTasks"));
-    // Performs this annonymous function for each row
-    $(".row").each(function () {
-        // Sets the value of "currentRow" to the integer value in the <p> element of the current row converted to military time
-        var currentRow = toMilitaryTime(parseInt($(this).find("p").text().trim()));
-        // Runs a for loop to look through the savedArr
-        for (i = 0; i < savedArr.length; i++) {
-            // "currentRow" - 9 will yield a value equal to a position in the savedArr array that corresponds to the 
-            if (currentRow - 9 == savedArr[i].arrayPosition) {
-                $(this).find("textarea").val(savedArr[i].textContent);
+    // Loads anything saved for the current day by checking if the day the saveArr array was saved on was today
+    if (savedArr[9] == currentDay) {
+        // Performs this annonymous function for each row
+        $(".row").each(function () {
+            // Sets the value of "currentRowValue" to the integer value in the <p> element of the current row converted to military time
+            var currentRowValue = toMilitaryTime(parseInt($(this).find("p").text().trim()));
+            // Runs a for loop to look through the savedArr array, but ignores the last value of the array
+            for (i = 0; i < 9; i++) {
+                // "currentRowValue" - 9 will yield a value equal to a position in the savedArr array that corresponds to the 
+                if (currentRowValue - 9 == savedArr[i].arrayPosition) {
+                    $(this).find("textarea").val(savedArr[i].textContent);
+                }
             }
-        }        
-    });
+        });
+    };
 };
 // END FUNCTION EXPRESSIONS
 
@@ -110,6 +113,7 @@ var loadSaves = function () {
 // BEGIN EVENT LISTENERS
 // Event listener for the save buttons
 $(".saveBtn").on("click", function () {
+    savedArr[9] = currentDay;
     // Sets the "hour" variable to the time held in the <p> element on the same row as the button that was clicked
     var timeframe = $(this).parent().find("p").text().trim();
     // "time" variable is set to the integer value taken from "timeframe" and converted to military time
@@ -147,8 +151,8 @@ updateTextarea();
 tilNextHourBegins();
 
 // Updates the text areas on the next hour and sets up the updateHourly function to run every hour thereafter
-setTimeout(function(){
-    // Calls the function to update the <textarea> elements immediately
+setTimeout(function () {
+    // Calls the function to update the <textarea> elements immediately after the timeout ends
     updateTextarea();
     // Updates the date at the top of the scheduler
     updateDate();
