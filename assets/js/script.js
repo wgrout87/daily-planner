@@ -90,6 +90,18 @@ var updateHourly = function () {
 
 
 
+// BEGIN EVENT LISTENERS
+$(".saveBtn").on("click", function () {
+    var keyword = $(this).parent().find("p").text().trim();
+    console.log(keyword);
+    var textToSave = $(this).parent().find("textarea").val();
+    console.log(textToSave);
+    localStorage.setItem(keyword,textToSave);
+})
+// END EVENT LISTENERS
+
+
+
 // BEGIN FUNCTIONS RUN ON LOAD
 // Updates the date at the top of the scheduler
 updateDate();
