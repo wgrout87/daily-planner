@@ -82,8 +82,6 @@ var tilNextHourBegins = function () {
 var updateHourly = function () {
     // Ensures the correct date is displayed
     updateDate();
-    // Calls the function immediately
-    updateTextarea();
     // Calls the function again after an hour and continues with that interval
     setInterval(updateTextarea, (1000 * 60 * 60));
     console.log("Time of update: " + moment().format("hh:mm"));
@@ -102,6 +100,13 @@ updateTextarea();
 // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
 tilNextHourBegins();
 
-// Sets up the updateHourly function to run on the hour
-setTimeout(updateHourly, tilNextHour);
+// Updates the text areas on the next hour and sets up the updateHourly function to run every hour thereafter
+setTimeout(function(){
+    // Calls the function to update the textareas immediately
+    updateTextarea();
+    // Updates the date at the top of the scheduler
+    updateDate();
+    // Starts the interval to update hourly
+    updateHourly();
+}, tilNextHour);
 // END FUNCTIONS RUN ON LOAD
