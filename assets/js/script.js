@@ -1,8 +1,3 @@
-// WHEN I view the time blocks for that day
-// THEN each time block is color-coded to indicate whether it is in the past, present, or future
-// WHEN I refresh the page
-// THEN the saved events persist
-
 // BEGIN MEDIA QUERIES
 var currentDay = $("#currentDay");
 // END MEDIA QUERIS
@@ -12,6 +7,8 @@ var currentDay = $("#currentDay");
 // BEGIN GLOBAL VARIABLES
 var tilNextHour = null;
 var keyword = null;
+var time = null;
+var savedArr = [9,10,11,12,1,2,3,4,5];
 // END GLOBAL VARIABLES
 
 
@@ -24,12 +21,8 @@ var updateDate = function () {
 
 // Checks the time and compares that against the time blocks on the planner, changing the color of their <textarea> elements based on how they compare
 var timeAudit = function (rowEl) {
-    // Gets the integer part of the time listed in the <p> element in the rows in the HTML
-    var time = parseInt($(rowEl).find("p").text().trim());
-    // Converts the afternoon hours to military time. Each row will now be represented with an integer value from 9 to 17
-    if (time < 9) {
-        time += 12;
-    };
+    // Gets the integer part of the time listed in the <p> element in the rows in the HTML and converts it to military time
+    time = toMilitaryTime(parseInt($(rowEl).find("p").text().trim()));
 
     // Checks if the time for the row is in the past 
     if (time < moment().format("H")) {
@@ -56,6 +49,15 @@ var timeAudit = function (rowEl) {
     };
 }
 
+// Changes "time" variable to military time
+var toMilitaryTime = function (timeValue) {
+    // Converts the afternoon hours to military time. Each row will now be represented with an integer value from 9 to 17
+    if (timeValue < 9) {
+        timeValue += 12;
+    };
+    return timeValue;
+}
+
 // Runs timeAudit for each time period to properly color each <textarea>
 var updateTextarea = function () {
     $(".row").each(function (index, el) {
@@ -66,9 +68,9 @@ var updateTextarea = function () {
 // Determines an approximate time until the next hour begins
 var tilNextHourBegins = function () {
     // Determines the current time and returns only the minutes and seconds formatted as 00:00
-    var time = moment().format("m:s");
+    var timeToNextHour = moment().format("m:s");
     // Removes the colon and adds each number to either side into an array
-    var timeArr = time.split(":");
+    var timeArr = timeToNextHour.split(":");
     // Converts the time values in the array into milliseconds and subtracts that value from the number of milliseconds in an hour to determine the number of milliseconds until the next hour
     tilNextHour = (60 * 60 * 1000) - ((timeArr[0] * 60 * 1000) + (timeArr[1] * 1000));
     console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
@@ -86,10 +88,19 @@ var updateHourly = function () {
 
 // Loads any saved <textarea> entries
 var loadSaves = function () {
+    // Retrieves and parses saved array from local storage
+    savedArr = JSON.parse(localStorage.getItem("savedTasks"));
+    // Performs this annonymous function for each row
     $(".row").each(function () {
-        keyword = $(this).find("p").text().trim();
-        var textContent = localStorage.getItem(keyword);
-        $(this).find("textarea").val(textContent);
+        // Sets the value of "currentRow" to the integer value in the <p> element of the current row converted to military time
+        var currentRow = toMilitaryTime(parseInt($(this).find("p").text().trim()));
+        // Runs a for loop to look through the savedArr
+        for (i = 0; i < savedArr.length; i++) {
+            // "currentRow" - 9 will yield a value equal to a position in the savedArr array that corresponds to the 
+            if (currentRow - 9 == savedArr[i].arrayPosition) {
+                $(this).find("textarea").val(savedArr[i].textContent);
+            }
+        }        
     });
 };
 // END FUNCTION EXPRESSIONS
@@ -99,12 +110,24 @@ var loadSaves = function () {
 // BEGIN EVENT LISTENERS
 // Event listener for the save buttons
 $(".saveBtn").on("click", function () {
-    // Sets the "keyword" variable to the time held in the <p> element on the same row as the button that was clicked
-    keyword = $(this).parent().find("p").text().trim();
+    // Sets the "hour" variable to the time held in the <p> element on the same row as the button that was clicked
+    var timeframe = $(this).parent().find("p").text().trim();
+    // "time" variable is set to the integer value taken from "timeframe" and converted to military time
+    time = toMilitaryTime(parseInt(timeframe));
+    // 9 is subtracted from the "time" variable, now in military time, so that it can properly be positioned in the "savedArr" array
+    var determinePosition = time - 9;
     // Sets the "textToSave" variable to the text content of the <textarea> element on the same row as the button that was clicked
     var textToSave = $(this).parent().find("textarea").val();
+    // Sets the information to be saved as properties of the timeframeObj
+    var timeframeObj = {
+        arrayPosition: determinePosition,
+        hour: timeframe,
+        textContent: textToSave
+    }
+    // Adds the new timeframeObj into the "savedArr" array
+    savedArr[timeframeObj.arrayPosition] = timeframeObj;
     // Saves the text using the time of that row as the keyword
-    localStorage.setItem(keyword,textToSave);
+    localStorage.setItem("savedTasks", JSON.stringify(savedArr));
 });
 // END EVENT LISTENERS
 
