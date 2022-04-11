@@ -1,9 +1,5 @@
 // WHEN I view the time blocks for that day
 // THEN each time block is color-coded to indicate whether it is in the past, present, or future
-// WHEN I click into a time block
-// THEN I can enter an event
-// WHEN I click the save button for that time block
-// THEN the text for that event is saved in local storage
 // WHEN I refresh the page
 // THEN the saved events persist
 
@@ -15,6 +11,7 @@ var currentDay = $("#currentDay");
 
 // BEGIN GLOBAL VARIABLES
 var tilNextHour = null;
+var keyword = null;
 // END GLOBAL VARIABLES
 
 
@@ -25,7 +22,7 @@ var updateDate = function () {
     currentDay.text(moment().format("MMMM Do YYYY"));
 };
 
-// Checks the time and compares that against the time blocks on the planner, changing the color of their textareas based on how they compare
+// Checks the time and compares that against the time blocks on the planner, changing the color of their <textarea> elements based on how they compare
 var timeAudit = function (rowEl) {
     // Gets the integer part of the time listed in the <p> element in the rows in the HTML
     var time = parseInt($(rowEl).find("p").text().trim());
@@ -36,7 +33,7 @@ var timeAudit = function (rowEl) {
 
     // Checks if the time for the row is in the past 
     if (time < moment().format("H")) {
-        // Adds the "past" class to the textarea
+        // Adds the "past" class to the <textarea>
         $(rowEl).find("textarea").addClass("past");
         // Removes the "present" class if present
         $(rowEl).find("textarea").removeClass("present");
@@ -44,7 +41,7 @@ var timeAudit = function (rowEl) {
 
     // Checks if the time for the row is in the present 
     if (time == moment().format("H")) {
-        // Adds the "present" class to the textarea
+        // Adds the "present" class to the <textarea>
         $(rowEl).find("textarea").addClass("present");
         // Removes the "future" class if present
         $(rowEl).find("textarea").removeClass("future");
@@ -53,7 +50,7 @@ var timeAudit = function (rowEl) {
     // Checks if the time for the row is in the future 
     if (time > moment().format("H")) {
         $(rowEl).find("textarea").addClass("future");
-        // Adds the "future" class to the textarea
+        // Adds the "future" class to the <textarea>
         $(rowEl).find("textarea").removeClass("past");
         // Removes the "past" class if present
     };
@@ -64,7 +61,7 @@ var updateTextarea = function () {
     $(".row").each(function (index, el) {
         timeAudit(el);
     });
-}
+};
 
 // Determines an approximate time until the next hour begins
 var tilNextHourBegins = function () {
@@ -76,28 +73,39 @@ var tilNextHourBegins = function () {
     tilNextHour = (60 * 60 * 1000) - ((timeArr[0] * 60 * 1000) + (timeArr[1] * 1000));
     console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
     console.log("Time until next hour: " + (59 - JSON.parse(timeArr[0])) + " minutes " + (60 - JSON.parse(timeArr[1])) + "seconds");
-}
+};
 
-// Ensures the correct date is displayed and updates the textarea color every hour
+// Ensures the correct date is displayed and updates the <textarea> color every hour
 var updateHourly = function () {
     // Ensures the correct date is displayed
     updateDate();
     // Calls the function again after an hour and continues with that interval
     setInterval(updateTextarea, (1000 * 60 * 60));
     console.log("Time of update: " + moment().format("hh:mm"));
-}
+};
+
+// Loads any saved <textarea> entries
+var loadSaves = function () {
+    $(".row").each(function () {
+        keyword = $(this).find("p").text().trim();
+        var textContent = localStorage.getItem(keyword);
+        $(this).find("textarea").val(textContent);
+    });
+};
 // END FUNCTION EXPRESSIONS
 
 
 
 // BEGIN EVENT LISTENERS
+// Event listener for the save buttons
 $(".saveBtn").on("click", function () {
-    var keyword = $(this).parent().find("p").text().trim();
-    console.log(keyword);
+    // Sets the "keyword" variable to the time held in the <p> element on the same row as the button that was clicked
+    keyword = $(this).parent().find("p").text().trim();
+    // Sets the "textToSave" variable to the text content of the <textarea> element on the same row as the button that was clicked
     var textToSave = $(this).parent().find("textarea").val();
-    console.log(textToSave);
+    // Saves the text using the time of that row as the keyword
     localStorage.setItem(keyword,textToSave);
-})
+});
 // END EVENT LISTENERS
 
 
@@ -105,6 +113,9 @@ $(".saveBtn").on("click", function () {
 // BEGIN FUNCTIONS RUN ON LOAD
 // Updates the date at the top of the scheduler
 updateDate();
+
+// Loads saved entries for all <textarea> elements
+loadSaves();
 
 // Runs timeAudit for each time period to properly color each <textarea>
 updateTextarea();
@@ -114,7 +125,7 @@ tilNextHourBegins();
 
 // Updates the text areas on the next hour and sets up the updateHourly function to run every hour thereafter
 setTimeout(function(){
-    // Calls the function to update the textareas immediately
+    // Calls the function to update the <textarea> elements immediately
     updateTextarea();
     // Updates the date at the top of the scheduler
     updateDate();
