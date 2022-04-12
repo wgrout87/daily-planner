@@ -90,8 +90,10 @@ var updateHourly = function () {
 
 // Loads any saved <textarea> entries
 var loadSaves = function () {
-    // Retrieves and parses saved array from local storage
-    savedArr = JSON.parse(localStorage.getItem("savedTasks"));
+    // Retrieves and parses saved array from local storage if such an array has been saved
+    if (localStorage.getItem("savedTasks")) {
+        savedArr = JSON.parse(localStorage.getItem("savedTasks"));
+    }
     // Loads anything saved for the current day by checking if the day the saveArr array was saved on was today
     if (savedArr[9] == currentDay) {
         // Performs this annonymous function for each row
@@ -112,7 +114,7 @@ var loadSaves = function () {
 // Function for intermittently adding and removing "bg-danger" class to and from save buttons
 var blink = function (btnEl) {
     // Capture the interval id in the global variable "intervalID"
-    intervalID = setInterval (() => {
+    intervalID = setInterval(() => {
         // Checks if the "bg-danger" class is already present and removes it if it is
         if (btnEl.hasClass("bg-danger")) {
             btnEl.removeClass("bg-danger")
