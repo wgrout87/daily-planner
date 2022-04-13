@@ -7,7 +7,6 @@ var currentDay = moment().format("MMMM Do YYYY");
 // BEGIN GLOBAL VARIABLES
 var tilNextHour = null;
 var keyword = null;
-var time = null;
 var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
 var intervalID = null;
 var blinkIntervalIDArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
@@ -23,8 +22,8 @@ var updateDate = function () {
 
 // Checks the time and compares that against the time blocks on the planner, changing the color of their <textarea> elements based on how they compare
 var timeAudit = function (rowEl) {
-    // Gets the integer part of the time listed in the <p> element in the rows in the HTML and converts it to military time
-    time = toMilitaryTime(parseInt($(rowEl).find("p").text().trim()));
+    // Gets the time value of the row from the dataset
+    var time = parseInt(rowEl.dataset.time);
 
     // Checks if the time for the row is in the past 
     if (time < moment().format("H")) {
@@ -49,15 +48,6 @@ var timeAudit = function (rowEl) {
         $(rowEl).find("textarea").removeClass("past");
         // Removes the "past" class if present
     };
-}
-
-// Changes "time" variable to military time
-var toMilitaryTime = function (timeValue) {
-    // Converts the afternoon hours to military time. Each row will now be represented with an integer value from 9 to 17
-    if (timeValue < 9) {
-        timeValue += 12;
-    };
-    return timeValue;
 }
 
 // Runs timeAudit for each time period to properly color each <textarea>
@@ -98,12 +88,11 @@ var loadSaves = function () {
     if (savedArr[9] == currentDay) {
         // Performs this annonymous function for each row
         $(".row").each(function () {
-            // Sets the value of "currentRowValue" to the integer value in the <p> element of the current row converted to military time
-            var currentRowValue = toMilitaryTime(parseInt($(this).find("p").text().trim()));
             // Runs a for loop to look through the savedArr array, but ignores the last value of the array
             for (i = 0; i < 9; i++) {
-                // "currentRowValue" - 9 will yield a value equal to a position in the savedArr array that corresponds to the 
-                if (currentRowValue - 9 == savedArr[i].arrayPosition) {
+                // Checks the arrPosition value of the row against the arrayPosition property of the object in position i of the savedArr array
+                if ($(this).data().arrPosition == savedArr[i].arrayPosition) {
+                    // If the values are equal, inserts the saved text content into the <textarea> of the current row
                     $(this).find("textarea").val(savedArr[i].textContent);
                 }
             }
@@ -149,18 +138,11 @@ $(".saveBtn").on("click", function () {
     savedArr[9] = currentDay;
     // Stops the save button flashing if it was
     clearBlink($(this));
-    // Sets the "hour" variable to the time held in the <p> element on the same row as the button that was clicked
-    var timeframe = $(this).parent().find("p").text().trim();
-    // "time" variable is set to the integer value taken from "timeframe" and converted to military time
-    time = toMilitaryTime(parseInt(timeframe));
-    // 9 is subtracted from the "time" variable, now in military time, so that it can properly be positioned in the "savedArr" array
-    var determinePosition = time - 9;
     // Sets the "textToSave" variable to the text content of the <textarea> element on the same row as the button that was clicked
     var textToSave = $(this).parent().find("textarea").val();
     // Sets the information to be saved as properties of the timeframeObj
     var timeframeObj = {
-        arrayPosition: determinePosition,
-        hour: timeframe,
+        arrayPosition: $(this).parent().data().arrPosition,
         textContent: textToSave
     };
     // Adds the new timeframeObj into the "savedArr" array
