@@ -10,6 +10,9 @@ var keyword = null;
 var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
 var intervalID = null;
 var blinkIntervalIDArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
+var timeoutID = null;
+var timeOfAudit = null;
+var dayOfAudit = null;
 // END GLOBAL VARIABLES
 
 
@@ -55,7 +58,10 @@ var updateTextarea = function () {
     $(".row").each(function (index, el) {
         timeAudit(el);
     });
-    console.log("Time of update: " + moment().format("hh:mm"));
+    timeOfAudit = moment().format("hh:mm");
+    dayOfAudit = moment().format("MMMM Do YYYY");
+    console.log("Time of update: " + timeOfAudit);
+    console.log("Date of update: " + dayOfAudit);
 };
 
 // Determines an approximate time until the next hour begins
@@ -66,16 +72,13 @@ var tilNextHourBegins = function () {
     var timeArr = timeToNextHour.split(":");
     // Converts the time values in the array into milliseconds and subtracts that value from the number of milliseconds in an hour to determine the number of milliseconds until the next hour
     tilNextHour = (60 * 60 * 1000) - ((timeArr[0] * 60 * 1000) + (timeArr[1] * 1000));
-    // console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
-    // console.log("Time until next hour: " + (59 - JSON.parse(timeArr[0])) + " minutes " + (60 - JSON.parse(timeArr[1])) + "seconds");
+    console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
 };
 
 // Ensures the correct date is displayed and updates the <textarea> color every hour
-var updateHourly = function () {
-    // Ensures the correct date is displayed
-    updateDate();
-    // Calls the function again after an hour and continues with that interval
-    setInterval(updateTextarea, (1000 * 60 * 60));
+var autoUpdate = function () {
+    // Calls the function upDateOnTheHour() every minute to ensure the best accuracy
+    setInterval(upDateOnTheHour, (1000 * 60));
 };
 
 // Loads any saved <textarea> entries
@@ -127,6 +130,23 @@ var clearBlink = function (btnEl) {
         btnEl.removeClass("bg-danger")
     };
 }
+
+// Updates the text areas on the next hour
+var upDateOnTheHour = function () {
+    // Cancels any previously established timeout
+    clearTimeout(timeoutID);
+    // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
+    tilNextHourBegins();
+    // Sets a new timeout that will update the text areas on the our
+    timeoutID = setTimeout(function () {
+        // Calls the function to update the <textarea> elements immediately after the timeout ends
+        updateTextarea();
+        // Updates the date at the top of the scheduler
+        updateDate();
+    }, tilNextHour);
+    console.log(moment().format("hh:mm:ss"));
+    console.log(tilNextHour);
+};
 // END FUNCTION EXPRESSIONS
 
 
@@ -181,13 +201,6 @@ updateTextarea();
 // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
 tilNextHourBegins();
 
-// Updates the text areas on the next hour and sets up the updateHourly function to run every hour thereafter
-setTimeout(function () {
-    // Calls the function to update the <textarea> elements immediately after the timeout ends
-    updateTextarea();
-    // Updates the date at the top of the scheduler
-    updateDate();
-    // Starts the interval to update hourly
-    updateHourly();
-}, tilNextHour);
+// Starts the interval to update automatically
+autoUpdate();
 // END FUNCTIONS RUN ON LOAD
