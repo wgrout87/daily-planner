@@ -1,10 +1,5 @@
-// BEGIN MEDIA QUERIES
-var currentDay = moment().format("MMMM Do YYYY");
-// END MEDIA QUERIS
-
-
-
 // BEGIN GLOBAL VARIABLES
+var currentDay = moment().format("MMMM Do YYYY");
 var tilNextHour = null;
 var keyword = null;
 var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
@@ -55,13 +50,16 @@ var timeAudit = function (rowEl) {
 
 // Runs timeAudit for each time period to properly color each <textarea>
 var updateTextarea = function () {
-    $(".row").each(function (index, el) {
-        timeAudit(el);
-    });
-    timeOfAudit = moment().format("hh:mm");
-    dayOfAudit = moment().format("MMMM Do YYYY");
-    console.log("Time of update: " + timeOfAudit);
-    console.log("Date of update: " + dayOfAudit);
+    // Checks if the textareas have already been updated for the current hour
+    if (moment().format("H") !== timeOfAudit || moment().format("MMMM Do YYYY") !== dayOfAudit) {
+        $(".row").each(function (index, el) {
+            timeAudit(el);
+        });
+        timeOfAudit = moment().format("H");
+        dayOfAudit = moment().format("MMMM Do YYYY");
+        console.log("Time of update: " + timeOfAudit);
+        console.log("Date of update: " + dayOfAudit);
+    }
 };
 
 // Determines an approximate time until the next hour begins
@@ -72,7 +70,23 @@ var tilNextHourBegins = function () {
     var timeArr = timeToNextHour.split(":");
     // Converts the time values in the array into milliseconds and subtracts that value from the number of milliseconds in an hour to determine the number of milliseconds until the next hour
     tilNextHour = (60 * 60 * 1000) - ((timeArr[0] * 60 * 1000) + (timeArr[1] * 1000));
-    console.log("Time until next hour in seconds: " + ((60 * 60) - ((timeArr[0] * 60) + (timeArr[1] * 1))));
+};
+
+// Updates the text areas on the next hour
+var upDateOnTheHour = function () {
+    // Calls updateTextarea() which will update the textareas if the timers have come out of sync (if for example the computer went to sleep)
+    updateTextarea();
+    // Cancels any previously established timeout
+    clearTimeout(timeoutID);
+    // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
+    tilNextHourBegins();
+    // Sets a new timeout that will update the text areas on the our
+    timeoutID = setTimeout(function () {
+        // Calls the function to update the <textarea> elements immediately after the timeout ends
+        updateTextarea();
+        // Updates the date at the top of the scheduler
+        updateDate();
+    }, tilNextHour);
 };
 
 // Ensures the correct date is displayed and updates the <textarea> color every hour
@@ -130,23 +144,6 @@ var clearBlink = function (btnEl) {
         btnEl.removeClass("bg-danger")
     };
 }
-
-// Updates the text areas on the next hour
-var upDateOnTheHour = function () {
-    // Cancels any previously established timeout
-    clearTimeout(timeoutID);
-    // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
-    tilNextHourBegins();
-    // Sets a new timeout that will update the text areas on the our
-    timeoutID = setTimeout(function () {
-        // Calls the function to update the <textarea> elements immediately after the timeout ends
-        updateTextarea();
-        // Updates the date at the top of the scheduler
-        updateDate();
-    }, tilNextHour);
-    console.log(moment().format("hh:mm:ss"));
-    console.log(tilNextHour);
-};
 // END FUNCTION EXPRESSIONS
 
 
