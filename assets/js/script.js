@@ -1,8 +1,8 @@
 // BEGIN GLOBAL VARIABLES
-var currentDay = moment().format("MMMM Do YYYY");
+var currentDay = moment().format("MMMM D YYYY");
 var tilNextHour = null;
 var keyword = null;
-var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5, "savedDate"];
+var savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
 var intervalID = null;
 var blinkIntervalIDArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
 var timeoutID = null;
@@ -20,46 +20,57 @@ var updateDate = function () {
 
 // Checks the time and compares that against the time blocks on the planner, changing the color of their <textarea> elements based on how they compare
 var timeAudit = function (rowEl) {
-    // Gets the time value of the row from the dataset
-    var time = parseInt(rowEl.dataset.time);
+    if ($("#currentDay").text() == currentDay) {
+        // Gets the time value of the row from the dataset
+        var time = parseInt(rowEl.dataset.time);
 
-    // Checks if the time for the row is in the past 
-    if (time < moment().format("H")) {
-        // Adds the "past" class to the <textarea>
-        $(rowEl).find("textarea").addClass("past");
-        // Removes the "present" class if present
-        $(rowEl).find("textarea").removeClass("present");
-    };
+        // Checks if the time for the row is in the past 
+        if (time < moment().format("H")) {
+            // Adds the "past" class to the <textarea>
+            $(rowEl).find("textarea").addClass("past");
+            // Removes the "present" class if present
+            $(rowEl).find("textarea").removeClass("present");
+            // Removes the "future" class if present
+            $(rowEl).find("textarea").removeClass("future");
+        };
 
-    // Checks if the time for the row is in the present 
-    if (time == moment().format("H")) {
-        // Adds the "present" class to the <textarea>
-        $(rowEl).find("textarea").addClass("present");
-        // Removes the "future" class if present
-        $(rowEl).find("textarea").removeClass("future");
-    };
+        // Checks if the time for the row is in the present 
+        if (time == moment().format("H")) {
+            // Adds the "present" class to the <textarea>
+            $(rowEl).find("textarea").addClass("present");
+            // Removes the "future" class if present
+            $(rowEl).find("textarea").removeClass("future");
+        };
 
-    // Checks if the time for the row is in the future 
-    if (time > moment().format("H")) {
-        $(rowEl).find("textarea").addClass("future");
+        // Checks if the time for the row is in the future 
+        if (time > moment().format("H")) {
+            // Adds the "future" class to the <textarea>
+            $(rowEl).find("textarea").addClass("future");
+            // Removes the "past" class if present
+            $(rowEl).find("textarea").removeClass("past");
+        };
+    }
+
+    else {
         // Adds the "future" class to the <textarea>
+        $(rowEl).find("textarea").addClass("future");
+        // Removes the "present" class if present
         $(rowEl).find("textarea").removeClass("past");
         // Removes the "past" class if present
-    };
+        $(rowEl).find("textarea").removeClass("present");
+    }
 }
 
 // Runs timeAudit for each time period to properly color each <textarea>
 var updateTextarea = function () {
-    // Checks if the textareas have already been updated for the current hour
-    if (moment().format("H") !== timeOfAudit || moment().format("MMMM Do YYYY") !== dayOfAudit) {
-        $(".row").each(function (index, el) {
-            timeAudit(el);
-        });
-        timeOfAudit = moment().format("H");
-        dayOfAudit = moment().format("MMMM Do YYYY");
-        console.log("Time of update: " + timeOfAudit);
-        console.log("Date of update: " + dayOfAudit);
-    }
+    $(".row").each(function (index, el) {
+        timeAudit(el);
+    });
+    // Saves the time and date of the most resent update
+    timeOfAudit = moment().format("H");
+    dayOfAudit = moment().format("MMMM D YYYY");
+    console.log("Time of update: " + timeOfAudit);
+    console.log("Date of update: " + dayOfAudit);
 };
 
 // Determines an approximate time until the next hour begins
@@ -74,8 +85,11 @@ var tilNextHourBegins = function () {
 
 // Updates the text areas on the next hour
 var upDateOnTheHour = function () {
-    // Calls updateTextarea() which will update the textareas if the timers have come out of sync (if for example the computer went to sleep)
-    updateTextarea();
+    // Checks if the textareas haven't been updated for the current hour
+    if (moment().format("H") !== timeOfAudit || moment().format("MMMM D YYYY") !== dayOfAudit) {
+        // Calls updateTextarea() which will update the textareas if the timers have come out of sync (if for example the computer went to sleep)
+        updateTextarea();
+    };
     // Cancels any previously established timeout
     clearTimeout(timeoutID);
     // Finds the time left until the next hour begins in milliseconds and saves it in the tilNextHour variable
@@ -98,23 +112,27 @@ var autoUpdate = function () {
 // Loads any saved <textarea> entries
 var loadSaves = function () {
     // Retrieves and parses saved array from local storage if such an array has been saved
-    if (localStorage.getItem("savedTasks")) {
-        savedArr = JSON.parse(localStorage.getItem("savedTasks"));
+    if (localStorage.getItem($("#currentDay").text())) {
+        savedArr = JSON.parse(localStorage.getItem($("#currentDay").text()));
     }
-    // Loads anything saved for the current day by checking if the day the saveArr array was saved on was today
-    if (savedArr[9] == currentDay) {
-        // Performs this annonymous function for each row
-        $(".row").each(function () {
-            // Runs a for loop to look through the savedArr array, but ignores the last value of the array
-            for (i = 0; i < 9; i++) {
-                // Checks the arrPosition value of the row against the arrayPosition property of the object in position i of the savedArr array
-                if ($(this).data().arrPosition == savedArr[i].arrayPosition) {
-                    // If the values are equal, inserts the saved text content into the <textarea> of the current row
-                    $(this).find("textarea").val(savedArr[i].textContent);
-                }
-            }
-        });
+
+    // Resets savedArr for days with no saved data
+    else {
+        savedArr = [9, 10, 11, 12, 1, 2, 3, 4, 5];
     };
+    // Performs this annonymous function for each row
+    $(".row").each(function () {
+        // Clears out any existing text
+        $(this).find("textarea").val("");
+        // Runs a for loop to look through the savedArr array
+        for (i = 0; i < savedArr.length; i++) {
+            // Checks the arrPosition value of the row against the arrayPosition property of the object in position i of the savedArr array
+            if ($(this).data().arrPosition == savedArr[i].arrayPosition) {
+                // If the values are equal, inserts the saved text content into the <textarea> of the current row
+                $(this).find("textarea").val(savedArr[i].textContent);
+            }
+        }
+    });
 };
 
 // Function for intermittently adding and removing "bg-danger" class to and from save buttons
@@ -151,8 +169,6 @@ var clearBlink = function (btnEl) {
 // BEGIN EVENT LISTENERS
 // Event listener for the save buttons
 $(".saveBtn").on("click", function () {
-    // Updates the date saved in the savedArr array
-    savedArr[9] = currentDay;
     // Stops the save button flashing if it was
     clearBlink($(this));
     // Sets the "textToSave" variable to the text content of the <textarea> element on the same row as the button that was clicked
@@ -165,7 +181,7 @@ $(".saveBtn").on("click", function () {
     // Adds the new timeframeObj into the "savedArr" array
     savedArr[timeframeObj.arrayPosition] = timeframeObj;
     // Saves the text using the time of that row as the keyword
-    localStorage.setItem("savedTasks", JSON.stringify(savedArr));
+    localStorage.setItem($("#currentDay").text(), JSON.stringify(savedArr));
 });
 
 // The save button will blink red if changes are not saved
@@ -180,6 +196,56 @@ $("textarea").on("change", function () {
     var blinkAltIntervalIDPosition = $(this).parent().data().arrPosition;
     // Saves the interval ID for the blinking effect in an array that can be referenced again when the changes are saved
     blinkIntervalIDArr[blinkAltIntervalIDPosition] = intervalID;
+});
+
+// "currentDay" <p> was clicked
+$(".jumbotron").on("click", "p", function () {
+    // get current text
+    var date = $(this)
+        .text()
+        .trim();
+
+    // create new input element
+    var dateSelect = $("<input>")
+        .attr("type", "text")
+        .val(date);
+
+    // Swap out elements
+    $(this).replaceWith(dateSelect);
+
+    // Enable jquery ui datepicker
+    dateSelect.datepicker({
+        minDate: 0,
+        dateFormat: "MM d yy",
+
+        onClose: function () {
+            // When calendar is closed, force a "change" event on the 'dateSelect'
+            $(this).trigger("change");
+        }
+    });
+
+    // automatically focus on new element
+    dateSelect.trigger("focus");
+});
+
+// Current day was changed
+$(".jumbotron").on("change", "input[type='text']", function () {
+    // get current text
+    var date = $(this)
+        .val()
+        .trim();
+
+    // recreate <p> element
+    var displayedDate = $("<p>")
+        .addClass("lead")
+        .attr("id", "currentDay")
+        .text(date);
+
+    // replace input with <p> element
+    $(this).replaceWith(displayedDate);
+
+    loadSaves();
+    updateTextarea();
 });
 // END EVENT LISTENERS
 
