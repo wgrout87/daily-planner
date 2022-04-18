@@ -22,7 +22,7 @@ var timeAudit = function (rowEl) {
     // Reassigns "currentDay" in case the page has been left open rolling into the next day
     currentDay = moment().format("MMMM D YYYY");
     // Checks if the displayed day is in the past and reloads the page if it is
-    if (moment(parseInt($("#currentDay").text())).isBefore(parseInt(currentDay))) {
+    if (Date.parse($("#currentDay").text()) < (Date.parse(currentDay))) {
         location.reload();
     };
     // Checks if the calendar is displaying the current day. If a future date is displayed, the <textarea> elements will be set to the future color scheme
